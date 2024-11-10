@@ -1,0 +1,43 @@
+version: '3'
+
+networks:
+  mc:
+    driver: bridge
+
+services:
+
+  nginx:
+    container_name: mc-nginx
+    image: nginx:1.18.0
+    restart: always
+    depends_on:
+      - "php"
+    volumes:
+      - ../mc:/mc_php/mc
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - ./log/nginx/logs:/logs
+    networks:
+      - mc
+    ports:
+      - "80:80"
+
+
+
+
+  php:
+    container_name: mc-php
+    image: php:7.2.34-fpm
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    working_dir: /mc_php/mc
+    volumes:
+      - ../mc:/mc_php/mc
+    networks:
+      - mc
+    ports:
+      - "9000:9000"
+    #user: "1000:1000"
+
+
