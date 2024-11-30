@@ -3,6 +3,11 @@ FROM php:7.2.34-fpm as builder
 # 更新 PECL 通道
 RUN pecl channel-update pecl.php.net
 
+#更换源
+RUN sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
+RUN sed -i "s/security.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
+RUN sed -i "s/http/https/g" /etc/apt/sources.list
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     libmagickwand-dev \
@@ -82,7 +87,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # 在 builder 阶段末尾，创建 opcache 配置文件
 RUN echo '\
-zend_extension=opcache.so\n\
 opcache.enable=1\n\
 opcache.enable_cli=1\n\
 opcache.validate_timestamps=1\n\
@@ -91,10 +95,19 @@ opcache.memory_consumption=128\n\
 opcache.interned_strings_buffer=8\n\
 opcache.max_accelerated_files=12000\n\
 opcache.fast_shutdown=1\n\
+memory_limit=256M\n\
+upload_max_filesize=5M\n\
+post_max_size=8M\n\
+max_file_uploads=20\n\
 ' > /usr/local/etc/php/conf.d/opcache.ini
 
 # 使用多阶段构建创建最终镜像
 FROM php:7.2.34-fpm
+
+#更换源
+RUN sed -i "s/deb.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
+RUN sed -i "s/security.debian.org/mirrors.aliyun.com/g" /etc/apt/sources.list
+RUN sed -i "s/http/https/g" /etc/apt/sources.list
 
 # 复制已编译的扩展和配置
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
